@@ -1,0 +1,1717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spider Web Lab – Week 1 AI & ML Assessment</title>
+  <!-- Tailwind CSS -->
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f8fafc;
+      color: #0f172a;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    /* Pulse animation for timer */
+    @keyframes pulse-red {
+      0%, 100% { background-color: #fee2e2; border-color: #ef4444; }
+      50% { background-color: #fecaca; border-color: #dc2626; }
+    }
+    .timer-critical {
+      animation: pulse-red 1s infinite;
+      color: #b91c1c !important;
+    }
+
+    /* Print styles for certificate / scorecard */
+    @media print {
+      body {
+        background: #ffffff !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .print-only {
+        display: block !important;
+      }
+      .scorecard-container {
+        border: 2px solid #0f172a !important;
+        box-shadow: none !important;
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-sky-500 selection:text-white" oncontextmenu="return false;">
+
+  <!-- ======================================================== -->
+  <!-- TOP NAVIGATION BAR -->
+  <!-- ======================================================== -->
+  <header class="no-print sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200 shadow-xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <!-- Logo & Branding -->
+      <div class="flex items-center space-x-3 cursor-pointer" onclick="returnToHomeIfAllowed()">
+        <img src="logo.jpg" alt="Spider Web Labs Logo" class="h-11 w-auto object-contain rounded-lg p-0.5 border border-slate-100 shadow-xs">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-extrabold tracking-tight text-slate-900 text-base sm:text-lg leading-tight">SPIDERWEB LABS</span>
+            <span class="text-[10px] uppercase font-bold tracking-wider bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full border border-blue-200">Academy</span>
+          </div>
+          <p class="text-xs text-slate-500 font-medium">Learn. Build. Innovate.</p>
+        </div>
+      </div>
+
+      <!-- Right Header Status (Live Timer & Proctoring during exam) -->
+      <div id="headerExamStatus" class="hidden flex items-center gap-3">
+        <!-- Proctoring Warning Badge -->
+        <div id="proctorBadge" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+          <span>Proctoring Active (Violations: <span id="violationCountBadge">0</span>/3)</span>
+        </div>
+
+        <!-- Live Countdown Timer -->
+        <div id="timerContainer" class="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-slate-100 border border-slate-300 text-slate-800 font-mono font-bold text-sm tracking-wide shadow-xs transition-all">
+          <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span id="timerDisplay">15:00</span>
+        </div>
+
+        <!-- Submit Button in Header for Quick Access -->
+        <button onclick="confirmSubmitTest()" class="px-4 py-1.5 bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold rounded-lg shadow-sm hover:shadow transition flex items-center gap-1.5">
+          <span>Submit Test</span>
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Header Right Actions: Admin Portal Trigger & Candidate Info -->
+      <div class="flex items-center gap-3">
+        <div id="headerUserInfo" class="hidden text-right">
+          <p id="headerStudentName" class="text-xs font-bold text-slate-800"></p>
+          <p id="headerStudentCollege" class="text-[11px] text-slate-500 truncate max-w-[150px]"></p>
+        </div>
+
+        <!-- Admin Portal Trigger Button -->
+        <button id="btnOpenAdminModal" onclick="openAdminModal()" 
+          class="px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-bold transition flex items-center gap-1.5 shadow-xs">
+          <svg class="w-3.5 h-3.5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+          <span class="hidden sm:inline">Admin Portal</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ======================================================== -->
+  <!-- MAIN CONTAINER (ROUTER) -->
+  <!-- ======================================================== -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 flex flex-col justify-center">
+
+    <!-- ======================================================== -->
+    <!-- VIEW 1: REGISTRATION SCREEN -->
+    <!-- ======================================================== -->
+    <section id="viewRegistration" class="max-w-xl mx-auto w-full transition-all duration-300">
+      <div class="bg-white rounded-2xl border border-slate-200/90 shadow-xl shadow-slate-200/60 overflow-hidden">
+        <!-- Banner with Official Logo -->
+        <div class="bg-gradient-to-r from-blue-950 via-blue-900 to-sky-900 p-6 sm:p-8 text-white relative">
+          <div class="flex items-center gap-4 mb-4">
+            <img src="logo.jpg" alt="Spider Web Labs Logo" class="h-16 w-auto object-contain bg-white rounded-xl p-1 shadow-md">
+            <div>
+              <div class="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-white/10 backdrop-blur border border-white/20 text-xs font-semibold text-sky-200 mb-1">
+                <span>AI & ML Internship Program</span>
+                <span>•</span>
+                <span>Week 1</span>
+              </div>
+              <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight">Candidate Registration</h1>
+            </div>
+          </div>
+          <p class="text-sky-100 text-xs sm:text-sm">Please enter your verified details before beginning the examination.</p>
+        </div>
+
+        <!-- Form -->
+        <form id="registrationForm" onsubmit="handleRegistrationSubmit(event)" class="p-6 sm:p-8 space-y-5">
+          <!-- Full Name -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5" for="regFullName">
+              Full Name <span class="text-rose-500">*</span>
+            </label>
+            <div class="relative">
+              <input type="text" id="regFullName" required placeholder="e.g. Rahul Sharma"
+                class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition">
+              <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            </div>
+          </div>
+
+          <!-- Email Address -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5" for="regEmail">
+              Email Address <span class="text-rose-500">*</span>
+            </label>
+            <div class="relative">
+              <input type="email" id="regEmail" required placeholder="name@college.edu or name@gmail.com"
+                class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition">
+              <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            </div>
+          </div>
+
+          <!-- College Name -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5" for="regCollege">
+              College / Institution Name <span class="text-rose-500">*</span>
+            </label>
+            <div class="relative">
+              <input type="text" id="regCollege" required placeholder="e.g. National Institute of Technology"
+                class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition">
+              <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+            </div>
+          </div>
+
+          <!-- Examination Specs Overview Badge -->
+          <div class="grid grid-cols-3 gap-2 py-3 px-4 bg-slate-50 rounded-xl border border-slate-200 text-center">
+            <div>
+              <p class="text-[10px] font-bold text-slate-400 uppercase">Questions</p>
+              <p class="text-sm font-extrabold text-blue-900">10 MCQs</p>
+            </div>
+            <div>
+              <p class="text-[10px] font-bold text-slate-400 uppercase">Duration</p>
+              <p class="text-sm font-extrabold text-blue-900">15 Mins</p>
+            </div>
+            <div>
+              <p class="text-[10px] font-bold text-slate-400 uppercase">Total Marks</p>
+              <p class="text-sm font-extrabold text-blue-900">10 Marks</p>
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit"
+            class="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-blue-900 via-blue-800 to-sky-700 hover:from-blue-950 hover:to-sky-800 text-white font-bold text-sm shadow-lg shadow-blue-900/25 transition transform active:scale-[0.99] flex items-center justify-center gap-2">
+            <span>Proceed to Examination Instructions</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- ======================================================== -->
+    <!-- VIEW 2: TEST INSTRUCTIONS & READINESS -->
+    <!-- ======================================================== -->
+    <section id="viewInstructions" class="hidden max-w-2xl mx-auto w-full transition-all duration-300">
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden">
+        <!-- Header with Logo -->
+        <div class="bg-gradient-to-r from-blue-900 to-slate-900 p-6 sm:p-7 text-white flex items-center justify-between">
+          <div class="flex items-center gap-3.5">
+            <img src="logo.jpg" alt="Spider Web Labs Logo" class="h-12 w-auto object-contain bg-white rounded-xl p-1 shadow">
+            <div>
+              <h2 class="text-lg sm:text-xl font-extrabold">Examination Guidelines</h2>
+              <p class="text-sky-200 text-xs mt-0.5">Please review all rules carefully before initiating the exam.</p>
+            </div>
+          </div>
+          <div class="hidden sm:flex w-10 h-10 rounded-xl bg-white/10 items-center justify-center">
+            <svg class="w-5 h-5 text-sky-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </div>
+        </div>
+
+        <div class="p-6 sm:p-8 space-y-6">
+          <!-- Candidate Brief -->
+          <div class="flex items-center justify-between p-3.5 bg-blue-50/70 rounded-xl border border-blue-100 text-xs">
+            <div>
+              <span class="text-slate-500">Candidate:</span>
+              <strong id="instructStudentName" class="text-blue-950 ml-1"></strong>
+            </div>
+            <div>
+              <span class="text-slate-500">College:</span>
+              <strong id="instructStudentCollege" class="text-blue-950 ml-1"></strong>
+            </div>
+          </div>
+
+          <!-- Instruction List -->
+          <div class="space-y-3 text-sm text-slate-700">
+            <div class="flex items-start gap-3 p-2.5 rounded-lg hover:bg-slate-50 transition">
+              <div class="w-5 h-5 rounded-full bg-blue-100 text-blue-800 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">1</div>
+              <p><strong>Pattern & Marking:</strong> Total <strong>10 questions</strong>, each carrying <strong>1 mark</strong> (Total: 10 Marks). There is <strong>no negative marking</strong>.</p>
+            </div>
+
+            <div class="flex items-start gap-3 p-2.5 rounded-lg hover:bg-slate-50 transition">
+              <div class="w-5 h-5 rounded-full bg-blue-100 text-blue-800 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">2</div>
+              <p><strong>Time Limit:</strong> You have strictly <strong>15 minutes</strong>. When the countdown timer hits 00:00, the test will automatically submit.</p>
+            </div>
+
+            <div class="flex items-start gap-3 p-2.5 rounded-lg hover:bg-slate-50 transition">
+              <div class="w-5 h-5 rounded-full bg-blue-100 text-blue-800 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">3</div>
+              <p><strong>Selection:</strong> Select only one answer per question. You may freely navigate between questions and modify answers before submitting.</p>
+            </div>
+
+            <div class="flex items-start gap-3 p-2.5 rounded-lg hover:bg-slate-50 transition">
+              <div class="w-5 h-5 rounded-full bg-blue-100 text-blue-800 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">4</div>
+              <p><strong>Submission Rule:</strong> All 10 questions must be answered before manual submission can be completed.</p>
+            </div>
+
+            <!-- Anti-Cheating Alert Box -->
+            <div class="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-950 flex items-start gap-3">
+              <svg class="w-5 h-5 text-amber-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <div class="text-xs space-y-1">
+                <p class="font-bold text-amber-900">Anti-Cheating Proctoring Enabled:</p>
+                <p>Tab switching, minimizing the browser window, or exiting full screen are strictly monitored. <strong>Three (3) violations will automatically terminate and submit your examination.</strong></p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Confirmation Checkbox -->
+          <div class="pt-2 border-t border-slate-200">
+            <label class="flex items-start gap-3 cursor-pointer group">
+              <input type="checkbox" id="agreeInstructionsCheckbox" onchange="toggleStartExamBtn()"
+                class="mt-1 w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300">
+              <span class="text-xs sm:text-sm text-slate-700 font-medium group-hover:text-slate-900 leading-snug">
+                I have read, understood, and agree to abide by all the assessment instructions and proctoring rules.
+              </span>
+            </label>
+          </div>
+
+          <!-- Buttons -->
+          <div class="flex items-center justify-between gap-4 pt-2">
+            <button onclick="goToRegistration()" class="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-600 font-semibold text-xs hover:bg-slate-50 transition">
+              ← Edit Details
+            </button>
+            <button id="btnStartExamination" disabled onclick="startExamination()"
+              class="flex-1 py-3 px-6 rounded-xl bg-gradient-to-r from-blue-900 via-blue-800 to-sky-700 text-white font-bold text-sm shadow-md transition disabled:opacity-40 disabled:cursor-not-allowed hover:enabled:shadow-lg flex items-center justify-center gap-2">
+              <span>Start Examination</span>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7m0 0l-7 7m7-7H3" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================== -->
+    <!-- VIEW 3: EXAMINATION DASHBOARD (ACTIVE TEST) -->
+    <!-- ======================================================== -->
+    <section id="viewExam" class="hidden w-full max-w-6xl mx-auto transition-all duration-300">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+        <!-- Left/Main Question Section (8 Cols) -->
+        <div class="lg:col-span-8 space-y-4">
+
+          <!-- Question Card Container -->
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-md p-6 sm:p-8 space-y-6">
+
+            <!-- Question Header & Badges -->
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
+              <div class="flex items-center gap-2">
+                <span id="currentQuestionBadge" class="px-3 py-1 bg-blue-900 text-white text-xs font-bold rounded-lg shadow-xs">
+                  Question 1 of 10
+                </span>
+                <span class="text-xs font-semibold text-slate-400">• Single Choice (1 Mark)</span>
+              </div>
+              <button onclick="toggleMarkForReview()" id="btnMarkReview"
+                class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg border border-amber-300 text-amber-800 bg-amber-50 hover:bg-amber-100 text-xs font-semibold transition">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                </svg>
+                <span id="markReviewText">Mark for Review</span>
+              </button>
+            </div>
+
+            <!-- Progress Bar -->
+            <div>
+              <div class="flex justify-between text-[11px] font-semibold text-slate-500 mb-1">
+                <span>Progress: <strong id="progressAnsweredCount">0</strong>/10 Answered</span>
+                <span id="progressPercentage">0%</span>
+              </div>
+              <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                <div id="progressBarFill" class="bg-gradient-to-r from-blue-700 to-sky-500 h-full rounded-full transition-all duration-300" style="width: 0%"></div>
+              </div>
+            </div>
+
+            <!-- Question Stem -->
+            <div class="py-2">
+              <h2 id="questionText" class="text-base sm:text-lg font-bold text-slate-900 leading-snug">
+                <!-- Dynamically injected -->
+              </h2>
+            </div>
+
+            <!-- Options List (A, B, C, D) -->
+            <div id="optionsContainer" class="space-y-3">
+              <!-- Dynamically injected options -->
+            </div>
+
+            <!-- Navigation Controls -->
+            <div class="pt-6 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
+              <div class="flex items-center gap-2">
+                <button id="btnPrevQuestion" onclick="navigateQuestion(-1)"
+                  class="px-4 py-2 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold transition disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1.5">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                  </svg>
+                  <span>Previous</span>
+                </button>
+                <button onclick="clearCurrentAnswer()" class="px-3 py-2 text-slate-500 hover:text-rose-600 text-xs font-medium transition">
+                  Clear Answer
+                </button>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <button id="btnNextQuestion" onclick="navigateQuestion(1)"
+                  class="px-5 py-2.5 rounded-xl bg-blue-900 hover:bg-blue-950 text-white text-xs font-bold shadow-sm transition flex items-center gap-1.5">
+                  <span>Next</span>
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Right Question Palette & Summary Sidebar (4 Cols) -->
+        <div class="lg:col-span-4 space-y-4">
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-md p-5 sm:p-6 space-y-5">
+            <!-- Palette Title -->
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 class="text-sm font-extrabold text-slate-900">Question Palette</h3>
+              <span class="text-xs text-slate-400 font-mono">10 Questions</span>
+            </div>
+
+            <!-- Legend -->
+            <div class="grid grid-cols-2 gap-2 text-[11px] text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100">
+              <div class="flex items-center gap-1.5">
+                <span class="w-3.5 h-3.5 rounded-md bg-emerald-600 text-white flex items-center justify-center font-bold text-[9px]">✓</span>
+                <span>Answered</span>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <span class="w-3.5 h-3.5 rounded-md bg-slate-200 border border-slate-300"></span>
+                <span>Not Answered</span>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <span class="w-3.5 h-3.5 rounded-md bg-amber-500 text-white flex items-center justify-center font-bold text-[9px]">★</span>
+                <span>Review</span>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <span class="w-3.5 h-3.5 rounded-md bg-blue-900 border-2 border-sky-400"></span>
+                <span>Current</span>
+              </div>
+            </div>
+
+            <!-- Questions Grid (1 to 10) -->
+            <div id="paletteGrid" class="grid grid-cols-5 gap-2.5 py-2">
+              <!-- Dynamically populated buttons -->
+            </div>
+
+            <!-- Summary Counter -->
+            <div class="border-t border-slate-100 pt-3 space-y-2 text-xs">
+              <div class="flex justify-between text-slate-600">
+                <span>Answered:</span>
+                <span id="statAnswered" class="font-bold text-emerald-700">0</span>
+              </div>
+              <div class="flex justify-between text-slate-600">
+                <span>Unanswered:</span>
+                <span id="statUnanswered" class="font-bold text-rose-600">10</span>
+              </div>
+              <div class="flex justify-between text-slate-600">
+                <span>Marked for Review:</span>
+                <span id="statReview" class="font-bold text-amber-700">0</span>
+              </div>
+            </div>
+
+            <!-- Big Final Submit Button -->
+            <button onclick="confirmSubmitTest()"
+              class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-700 to-teal-700 hover:from-emerald-800 hover:to-teal-800 text-white font-extrabold text-sm shadow-md hover:shadow-lg transition flex items-center justify-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>Submit Examination</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ======================================================== -->
+    <!-- VIEW 4: RESULTS & SCORECARD (AFTER SUBMISSION) -->
+    <!-- ======================================================== -->
+    <section id="viewResult" class="hidden w-full max-w-4xl mx-auto transition-all duration-300">
+      <div class="scorecard-container bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden space-y-8 p-6 sm:p-10">
+
+        <!-- Result Banner with Official Logo -->
+        <div class="border-b border-slate-200 pb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div class="flex items-center gap-4">
+            <img src="logo.jpg" alt="Spider Web Labs Logo" class="h-16 w-auto object-contain bg-white rounded-xl p-1 border border-slate-200 shadow-xs">
+            <div>
+              <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-800 text-xs font-bold uppercase tracking-wider mb-1">
+                <span>Spider Web Labs Academy</span>
+                <span>•</span>
+                <span>Official Scorecard</span>
+              </div>
+              <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Week 1 – AI & ML Assessment Result</h1>
+              <p class="text-xs sm:text-sm text-slate-500 mt-0.5">Assessment completed and proctoring logs verified.</p>
+            </div>
+          </div>
+          <div class="no-print flex items-center gap-2">
+            <button onclick="window.print()" class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow transition flex items-center gap-1.5">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+              </svg>
+              <span>Print Scorecard</span>
+            </button>
+            <button onclick="retakeAssessment()" class="px-4 py-2 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold transition">
+              Retake Test
+            </button>
+          </div>
+        </div>
+
+        <!-- Score Badge & Quick Metrics -->
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+          <!-- Main Score -->
+          <div class="sm:col-span-2 bg-gradient-to-br from-blue-950 via-blue-900 to-sky-900 text-white rounded-2xl p-6 flex items-center justify-between shadow-lg">
+            <div>
+              <p class="text-xs uppercase font-bold text-sky-200 tracking-wider">Your Final Score</p>
+              <div class="flex items-baseline gap-1 mt-1">
+                <span id="finalScoreNumerator" class="text-4xl sm:text-5xl font-black">--</span>
+                <span class="text-xl text-sky-200 font-bold">/ 10</span>
+              </div>
+              <p id="finalScoreVerdict" class="text-xs font-semibold text-emerald-300 mt-2">Passed with Distinction</p>
+            </div>
+            <div id="finalScoreRadial" class="w-20 h-20 rounded-full border-4 border-sky-400/40 flex items-center justify-center font-extrabold text-xl text-white font-mono bg-white/10 backdrop-blur">
+              <span id="finalScorePercent">--%</span>
+            </div>
+          </div>
+
+          <!-- Total Time -->
+          <div class="bg-slate-50 border border-slate-200 rounded-2xl p-5 flex flex-col justify-between">
+            <span class="text-xs font-bold uppercase text-slate-400">Time Taken</span>
+            <div class="mt-2">
+              <p id="finalTimeTaken" class="text-2xl font-black text-slate-800 font-mono">--:--</p>
+              <p class="text-[11px] text-slate-500 mt-0.5">Out of 15:00 minutes</p>
+            </div>
+          </div>
+
+          <!-- Proctoring Status -->
+          <div class="bg-slate-50 border border-slate-200 rounded-2xl p-5 flex flex-col justify-between">
+            <span class="text-xs font-bold uppercase text-slate-400">Integrity Log</span>
+            <div class="mt-2">
+              <p id="finalViolationsCount" class="text-2xl font-black text-slate-800">0 Strikes</p>
+              <p id="finalViolationStatus" class="text-[11px] text-emerald-700 font-semibold mt-0.5">Clean Record (No cheating)</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Student Identification Meta -->
+        <div class="bg-slate-50/70 border border-slate-200 rounded-xl p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+          <div>
+            <span class="text-slate-400 font-medium">Candidate Name:</span>
+            <p id="resStudentName" class="font-bold text-slate-900 mt-0.5"></p>
+          </div>
+          <div>
+            <span class="text-slate-400 font-medium">Email Address:</span>
+            <p id="resStudentEmail" class="font-bold text-slate-900 mt-0.5"></p>
+          </div>
+          <div>
+            <span class="text-slate-400 font-medium">College Name:</span>
+            <p id="resStudentCollege" class="font-bold text-slate-900 mt-0.5"></p>
+          </div>
+          <div>
+            <span class="text-slate-400 font-medium">Submission Timestamp:</span>
+            <p id="resTimestamp" class="font-semibold text-slate-800 mt-0.5"></p>
+          </div>
+          <div>
+            <span class="text-slate-400 font-medium">Submission Mode:</span>
+            <p id="resSubmitMode" class="font-semibold text-slate-800 mt-0.5">Manual Candidate Submission</p>
+          </div>
+          <div>
+            <span class="text-slate-400 font-medium">Verification Status:</span>
+            <p class="font-semibold text-emerald-700 mt-0.5">Official & Verified</p>
+          </div>
+        </div>
+
+        <!-- Detailed Question Review & Answer Key -->
+        <div class="space-y-4 pt-4">
+          <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+            <h3 class="text-lg font-bold text-slate-900">Detailed Answer Key & Review</h3>
+            <span class="text-xs text-slate-500">10 Questions</span>
+          </div>
+
+          <div id="detailedReviewContainer" class="space-y-4">
+            <!-- Dynamically populated review cards -->
+          </div>
+        </div>
+
+        <!-- Scorecard Footer -->
+        <div class="border-t border-slate-200 pt-6 text-center text-xs text-slate-400 space-y-1">
+          <p class="font-semibold text-slate-600">Spider Web Labs Academy • Learn. Build. Innovate.</p>
+          <p>Official Assessment Record • Verified by Proctoring Engine</p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ======================================================== -->
+    <!-- VIEW 5: ADMIN RESULTS PORTAL -->
+    <!-- ======================================================== -->
+    <section id="viewAdminPortal" class="hidden w-full max-w-6xl mx-auto transition-all duration-300 space-y-6">
+      <!-- Admin Top Card -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-md p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="flex items-center gap-4">
+          <img src="logo.jpg" alt="Spider Web Labs Logo" class="h-14 w-auto object-contain bg-white rounded-xl p-1 border border-slate-200 shadow-xs">
+          <div>
+            <div class="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-900 text-xs font-bold uppercase tracking-wider mb-1">
+              <span>Admin Dashboard</span>
+              <span>•</span>
+              <span>Candidate Records</span>
+            </div>
+            <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Assessment Results Central</h1>
+            <p class="text-xs text-slate-500">Monitor intern submissions, export data to Excel/CSV, or link Google Sheets.</p>
+          </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <button onclick="exportResultsCSV()" class="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold shadow transition flex items-center gap-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            <span>Export to CSV / Excel</span>
+          </button>
+          <button onclick="openWebhookSettingsModal()" class="px-3 py-2 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold transition flex items-center gap-1.5">
+            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+            </svg>
+            <span>Google Sheets Sync</span>
+          </button>
+          <button onclick="exitAdminPortal()" class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition">
+            Exit Admin
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Metrics Grid -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs">
+          <span class="text-xs font-bold text-slate-400 uppercase">Total Candidates</span>
+          <p id="adminStatTotal" class="text-3xl font-black text-slate-900 mt-1">0</p>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs">
+          <span class="text-xs font-bold text-slate-400 uppercase">Average Score</span>
+          <p id="adminStatAvg" class="text-3xl font-black text-blue-900 mt-1">0.0 / 10</p>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs">
+          <span class="text-xs font-bold text-slate-400 uppercase">Pass Rate (≥ 6/10)</span>
+          <p id="adminStatPassRate" class="text-3xl font-black text-emerald-700 mt-1">0%</p>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs">
+          <span class="text-xs font-bold text-slate-400 uppercase">Violations Flagged</span>
+          <p id="adminStatViolations" class="text-3xl font-black text-amber-700 mt-1">0</p>
+        </div>
+      </div>
+
+      <!-- Search & Results Table -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-md p-6 space-y-4">
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+          <h3 class="text-base font-bold text-slate-900">Submitted Intern Records</h3>
+          <div class="flex items-center gap-2 w-full sm:w-auto">
+            <input type="text" id="adminSearchInput" onkeyup="filterAdminTable()" placeholder="Search by name, email, or college..."
+              class="w-full sm:w-72 px-3 py-1.5 text-xs rounded-xl border border-slate-300 focus:outline-none focus:border-blue-600">
+            <button onclick="clearAllResults()" class="px-3 py-1.5 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 text-xs font-bold transition whitespace-nowrap">
+              Clear All
+            </button>
+          </div>
+        </div>
+
+        <!-- Table Container -->
+        <div class="overflow-x-auto rounded-xl border border-slate-200">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider">
+              <tr>
+                <th class="p-3">#</th>
+                <th class="p-3">Candidate</th>
+                <th class="p-3">College</th>
+                <th class="p-3">Score</th>
+                <th class="p-3">Time</th>
+                <th class="p-3">Violations</th>
+                <th class="p-3">Status</th>
+                <th class="p-3">Submitted At</th>
+              </tr>
+            </thead>
+            <tbody id="adminResultsTableBody" class="divide-y divide-slate-100 text-slate-800">
+              <!-- Dynamically populated rows -->
+            </tbody>
+          </table>
+        </div>
+        <p id="adminNoRecordsMsg" class="text-center text-xs text-slate-400 py-6">No test submissions recorded yet.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: ADMIN LOGIN -->
+  <!-- ======================================================== -->
+  <div id="adminLoginModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl border border-slate-200 space-y-4">
+      <div class="w-12 h-12 rounded-full bg-blue-100 text-blue-900 flex items-center justify-center mx-auto">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        </svg>
+      </div>
+      <div>
+        <h3 class="text-lg font-bold text-slate-900">Admin Authentication</h3>
+        <p class="text-xs text-slate-500 mt-1">Enter your admin passcode to view intern results.</p>
+      </div>
+
+      <div>
+        <input type="password" id="adminPasswordInput" placeholder="Enter PIN (Default: admin123)"
+          class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:border-blue-600 text-center font-mono text-sm tracking-wider">
+        <p id="adminLoginError" class="text-xs text-rose-600 mt-1.5 hidden font-semibold">Incorrect passcode. Try again.</p>
+      </div>
+
+      <div class="flex items-center gap-2 pt-2">
+        <button onclick="closeAdminModal()" class="flex-1 py-2.5 rounded-xl border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-50 transition">
+          Cancel
+        </button>
+        <button onclick="verifyAdminLogin()" class="flex-1 py-2.5 rounded-xl bg-blue-900 hover:bg-blue-950 text-white text-xs font-bold shadow transition">
+          Unlock
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: GOOGLE SHEETS WEBHOOK SETTINGS -->
+  <!-- ======================================================== -->
+  <div id="webhookSettingsModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 text-left shadow-2xl border border-slate-200 space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 class="text-base font-bold text-slate-900">Google Sheets Real-Time Sync</h3>
+        <button onclick="closeWebhookSettingsModal()" class="text-slate-400 hover:text-slate-700 font-bold text-sm">✕</button>
+      </div>
+
+      <p class="text-xs text-slate-600 leading-relaxed">
+        Connect this assessment website to any Google Spreadsheet so candidate submissions automatically log as new rows in real time.
+      </p>
+
+      <div class="space-y-1.5">
+        <label class="block text-xs font-bold uppercase text-slate-700" for="webhookUrlInput">
+          Google Apps Script Web App URL:
+        </label>
+        <input type="url" id="webhookUrlInput" placeholder="https://script.google.com/macros/s/.../exec"
+          class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600">
+      </div>
+
+      <div class="bg-slate-50 border border-slate-200 p-3 rounded-xl text-xs space-y-1.5 text-slate-600">
+        <p class="font-bold text-slate-800">Quick 1-Minute Setup Instructions:</p>
+        <p>1. In your Google Sheet (*Spider Web Lab – Internship Applications 2026*), go to <strong>Extensions → Apps Script</strong>.</p>
+        <p>2. Add a `doPost(e)` function to append incoming JSON rows, click <strong>Deploy → New deployment → Web app</strong> (Access: *Anyone*).</p>
+        <p>3. Paste the generated Web App URL above and click Save.</p>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-2">
+        <button onclick="closeWebhookSettingsModal()" class="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-50 transition">
+          Cancel
+        </button>
+        <button onclick="saveWebhookSettings()" class="px-5 py-2 rounded-xl bg-blue-900 hover:bg-blue-950 text-white text-xs font-bold shadow transition">
+          Save Sync URL
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: ANTI-CHEATING WARNING ALERT -->
+  <!-- ======================================================== -->
+  <div id="violationModal" class="hidden fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 text-center shadow-2xl border-2 border-rose-500 space-y-4 animate-bounce-short">
+      <div class="w-16 h-16 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+      </div>
+      <div>
+        <span class="inline-block px-3 py-1 bg-rose-100 text-rose-800 text-xs font-extrabold uppercase rounded-full mb-1">
+          Proctoring Violation Alert
+        </span>
+        <h3 class="text-xl font-black text-slate-900">Warning <span id="modalViolationCurrent">1</span> of 3</h3>
+      </div>
+      <p class="text-xs text-slate-600 leading-relaxed">
+        Tab switching, window minimization, or leaving full-screen mode is prohibited during the examination.
+        <strong>Three (3) violations will automatically terminate and submit your assessment.</strong>
+      </p>
+      <div class="p-3 bg-rose-50 rounded-xl border border-rose-200 text-xs font-bold text-rose-900">
+        Remain on this window until you complete your submission.
+      </div>
+      <button onclick="dismissViolationModal()" class="w-full py-3 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow transition">
+        I Understand – Resume Examination
+      </button>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: CONFIRM MANUAL SUBMISSION -->
+  <!-- ======================================================== -->
+  <div id="submitConfirmModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 text-center shadow-2xl border border-slate-200 space-y-4">
+      <div class="w-14 h-14 rounded-full bg-blue-100 text-blue-800 flex items-center justify-center mx-auto">
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <h3 class="text-lg font-bold text-slate-900">Submit Your Examination?</h3>
+      
+      <!-- Summary inside modal -->
+      <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-2 text-left">
+        <div class="flex justify-between">
+          <span class="text-slate-600">Total Questions:</span>
+          <span class="font-bold text-slate-900">10</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-slate-600">Answered Questions:</span>
+          <span id="modalAnsweredCount" class="font-bold text-emerald-700">0</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-slate-600">Unanswered Questions:</span>
+          <span id="modalUnansweredCount" class="font-bold text-rose-600">10</span>
+        </div>
+      </div>
+
+      <p id="modalWarningText" class="text-xs text-rose-600 font-semibold hidden">
+        ⚠️ Warning: You have unanswered questions! Are you sure you want to proceed?
+      </p>
+
+      <div class="flex items-center gap-3 pt-2">
+        <button onclick="closeSubmitConfirmModal()" class="flex-1 py-2.5 rounded-xl border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-50 transition">
+          Return to Test
+        </button>
+        <button onclick="executeFinalSubmission('Manual Candidate Submission')" class="flex-1 py-2.5 rounded-xl bg-blue-900 hover:bg-blue-950 text-white text-xs font-bold shadow transition">
+          Confirm Submit
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- JAVASCRIPT APPLICATION LOGIC -->
+  <!-- ======================================================== -->
+  <script>
+    // ----------------------------------------------------
+    // QUESTION BANK (All 10 Questions from specification)
+    // ----------------------------------------------------
+    const QUESTIONS = [
+      {
+        id: 1,
+        question: "What does AI stand for?",
+        options: [
+          { key: "A", text: "Automated Information" },
+          { key: "B", text: "Artificial Intelligence" },
+          { key: "C", text: "Advanced Internet" },
+          { key: "D", text: "Applied Innovation" }
+        ],
+        correct: "B",
+        explanation: "AI stands for Artificial Intelligence, which refers to the simulation of human intelligence by software and machines."
+      },
+      {
+        id: 2,
+        question: "Which of the following is a subset of Artificial Intelligence?",
+        options: [
+          { key: "A", text: "Web Development" },
+          { key: "B", text: "Database Management" },
+          { key: "C", text: "Machine Learning" },
+          { key: "D", text: "Computer Networking" }
+        ],
+        correct: "C",
+        explanation: "Machine Learning is a subset and core branch of AI focused on training algorithms to learn patterns from data."
+      },
+      {
+        id: 3,
+        question: "Which type of Machine Learning uses labelled data?",
+        options: [
+          { key: "A", text: "Unsupervised Learning" },
+          { key: "B", text: "Supervised Learning" },
+          { key: "C", text: "Reinforcement Learning" },
+          { key: "D", text: "Deep Learning" }
+        ],
+        correct: "B",
+        explanation: "Supervised Learning trains models using input-output pairs where both features and correct labels are provided."
+      },
+      {
+        id: 4,
+        question: "Which of the following is used for numerical calculations in Python?",
+        options: [
+          { key: "A", text: "Flask" },
+          { key: "B", text: "HTML" },
+          { key: "C", text: "NumPy" },
+          { key: "D", text: "CSS" }
+        ],
+        correct: "C",
+        explanation: "NumPy (Numerical Python) is the foundational Python library for efficient multidimensional arrays and matrix mathematics."
+      },
+      {
+        id: 5,
+        question: "What is a Pandas DataFrame?",
+        options: [
+          { key: "A", text: "A programming language" },
+          { key: "B", text: "A two-dimensional tabular data structure" },
+          { key: "C", text: "An image processing tool" },
+          { key: "D", text: "A web browser" }
+        ],
+        correct: "B",
+        explanation: "A Pandas DataFrame is a 2-dimensional labeled data structure with columns of potentially different types, similar to a spreadsheet."
+      },
+      {
+        id: 6,
+        question: "Which function displays the first five rows of a Pandas DataFrame?",
+        options: [
+          { key: "A", text: "data.tail()" },
+          { key: "B", text: "data.show()" },
+          { key: "C", text: "data.head()" },
+          { key: "D", text: "data.first()" }
+        ],
+        correct: "C",
+        explanation: "data.head() returns the first 5 rows of the DataFrame by default, useful for quickly previewing loaded datasets."
+      },
+      {
+        id: 7,
+        question: "Which function checks missing values in Pandas?",
+        options: [
+          { key: "A", text: "isnull()" },
+          { key: "B", text: "remove()" },
+          { key: "C", text: "delete()" },
+          { key: "D", text: "missing()" }
+        ],
+        correct: "A",
+        explanation: "isnull() (or isna()) detects missing values and returns a boolean DataFrame indicating NaN values."
+      },
+      {
+        id: 8,
+        question: "Which Python library is commonly used for data visualization?",
+        options: [
+          { key: "A", text: "Matplotlib" },
+          { key: "B", text: "Flask" },
+          { key: "C", text: "Django" },
+          { key: "D", text: "Selenium" }
+        ],
+        correct: "A",
+        explanation: "Matplotlib is Python's standard 2D plotting and data visualization library."
+      },
+      {
+        id: 9,
+        question: "Which chart is suitable for comparing different categories?",
+        options: [
+          { key: "A", text: "Line Chart" },
+          { key: "B", text: "Bar Chart" },
+          { key: "C", text: "Histogram" },
+          { key: "D", text: "Scatter Plot" }
+        ],
+        correct: "B",
+        explanation: "Bar charts are specifically designed to present and compare discrete categorical data using rectangular bars."
+      },
+      {
+        id: 10,
+        question: "Which chart helps visualize the relationship between two numerical variables?",
+        options: [
+          { key: "A", text: "Pie Chart" },
+          { key: "B", text: "Scatter Plot" },
+          { key: "C", text: "Bar Chart" },
+          { key: "D", text: "Line Chart" }
+        ],
+        correct: "B",
+        explanation: "Scatter plots plot pairs of values on Cartesian coordinates to show correlation and distribution between two continuous numerical variables."
+      }
+    ];
+
+    // ----------------------------------------------------
+    // APPLICATION STATE
+    // ----------------------------------------------------
+    let candidate = {
+      fullName: "",
+      email: "",
+      college: ""
+    };
+
+    let examState = {
+      currentIndex: 0,
+      answers: {},        // { questionId: "B" }
+      markedReview: {},   // { questionId: true }
+      timeRemaining: 15 * 60, // 15 mins in seconds
+      timerInterval: null,
+      violations: 0,
+      maxViolations: 3,
+      isExamActive: false,
+      startTime: null,
+      endTime: null,
+      submissionReason: "Normal"
+    };
+
+    // ----------------------------------------------------
+    // STEP 1: REGISTRATION LOGIC
+    // ----------------------------------------------------
+    function handleRegistrationSubmit(e) {
+      e.preventDefault();
+      const name = document.getElementById("regFullName").value.trim();
+      const email = document.getElementById("regEmail").value.trim();
+      const college = document.getElementById("regCollege").value.trim();
+
+      if (!name || !email || !college) {
+        alert("Please complete all required fields.");
+        return;
+      }
+
+      candidate.fullName = name;
+      candidate.email = email;
+      candidate.college = college;
+
+      // Update Header & Instructions UI
+      document.getElementById("instructStudentName").textContent = candidate.fullName;
+      document.getElementById("instructStudentCollege").textContent = candidate.college;
+      document.getElementById("headerStudentName").textContent = candidate.fullName;
+      document.getElementById("headerStudentCollege").textContent = candidate.college;
+      document.getElementById("headerUserInfo").classList.remove("hidden");
+
+      // Switch view
+      switchView("viewInstructions");
+    }
+
+    function goToRegistration() {
+      switchView("viewRegistration");
+    }
+
+    function toggleStartExamBtn() {
+      const checkbox = document.getElementById("agreeInstructionsCheckbox");
+      const btn = document.getElementById("btnStartExamination");
+      btn.disabled = !checkbox.checked;
+    }
+
+    // ----------------------------------------------------
+    // STEP 2: START EXAMINATION & TIMER
+    // ----------------------------------------------------
+    function startExamination() {
+      examState.isExamActive = true;
+      examState.startTime = new Date();
+      examState.timeRemaining = 15 * 60;
+      examState.violations = 0;
+      examState.answers = {};
+      examState.markedReview = {};
+      examState.currentIndex = 0;
+
+      // Switch View & show exam header controls
+      switchView("viewExam");
+      document.getElementById("headerExamStatus").classList.remove("hidden");
+      document.getElementById("proctorBadge").classList.remove("hidden");
+      document.getElementById("btnOpenAdminModal").classList.add("hidden");
+
+      // Initialize Palette
+      renderPalette();
+
+      // Render Question 1
+      renderQuestion(0);
+
+      // Start Countdown Timer
+      startExamTimer();
+
+      // Activate Anti-Cheating Event Listeners
+      setupAntiCheatingListeners();
+    }
+
+    function startExamTimer() {
+      clearInterval(examState.timerInterval);
+      updateTimerUI();
+
+      examState.timerInterval = setInterval(() => {
+        if (!examState.isExamActive) return;
+
+        examState.timeRemaining--;
+        updateTimerUI();
+
+        if (examState.timeRemaining <= 0) {
+          clearInterval(examState.timerInterval);
+          executeFinalSubmission("Time Expired (Auto-Submitted)");
+        }
+      }, 1000);
+    }
+
+    function updateTimerUI() {
+      const mins = Math.floor(examState.timeRemaining / 60);
+      const secs = examState.timeRemaining % 60;
+      const displayStr = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+      const timerDisplay = document.getElementById("timerDisplay");
+      const timerContainer = document.getElementById("timerContainer");
+
+      timerDisplay.textContent = displayStr;
+
+      // Pulse red if under 2 minutes
+      if (examState.timeRemaining <= 120) {
+        timerContainer.classList.add("timer-critical");
+      } else {
+        timerContainer.classList.remove("timer-critical");
+      }
+    }
+
+    // ----------------------------------------------------
+    // STEP 3: QUESTION RENDERING & NAVIGATION
+    // ----------------------------------------------------
+    function renderQuestion(index) {
+      examState.currentIndex = index;
+      const q = QUESTIONS[index];
+
+      // Badges
+      document.getElementById("currentQuestionBadge").textContent = `Question ${index + 1} of ${QUESTIONS.length}`;
+
+      // Question Text
+      document.getElementById("questionText").textContent = q.question;
+
+      // Mark for Review Button state
+      const isMarked = !!examState.markedReview[q.id];
+      const markBtn = document.getElementById("btnMarkReview");
+      const markText = document.getElementById("markReviewText");
+      if (isMarked) {
+        markBtn.classList.remove("border-amber-300", "bg-amber-50", "text-amber-800");
+        markBtn.classList.add("border-amber-500", "bg-amber-500", "text-white");
+        markText.textContent = "Marked for Review";
+      } else {
+        markBtn.classList.add("border-amber-300", "bg-amber-50", "text-amber-800");
+        markBtn.classList.remove("border-amber-500", "bg-amber-500", "text-white");
+        markText.textContent = "Mark for Review";
+      }
+
+      // Prev / Next button state
+      document.getElementById("btnPrevQuestion").disabled = (index === 0);
+      const nextBtn = document.getElementById("btnNextQuestion");
+      if (index === QUESTIONS.length - 1) {
+        nextBtn.innerHTML = `<span>Review & Submit</span><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>`;
+      } else {
+        nextBtn.innerHTML = `<span>Next</span><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>`;
+      }
+
+      // Render Options A, B, C, D
+      const optionsContainer = document.getElementById("optionsContainer");
+      optionsContainer.innerHTML = "";
+
+      const currentSelected = examState.answers[q.id];
+
+      q.options.forEach(opt => {
+        const isSelected = (currentSelected === opt.key);
+        const card = document.createElement("div");
+        card.className = `flex items-center gap-3.5 p-4 rounded-xl border cursor-pointer transition-all ${
+          isSelected 
+            ? "border-blue-600 bg-blue-50/70 shadow-xs ring-1 ring-blue-500 text-blue-950 font-semibold" 
+            : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/80 text-slate-800"
+        }`;
+        card.onclick = () => selectOption(q.id, opt.key);
+
+        card.innerHTML = `
+          <div class="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 transition-all ${
+            isSelected 
+              ? "bg-blue-900 text-white" 
+              : "bg-slate-100 text-slate-600 border border-slate-200"
+          }">
+            ${opt.key}
+          </div>
+          <span class="text-sm flex-1 leading-snug">${opt.text}</span>
+          <div class="w-5 h-5 rounded-full border flex items-center justify-center ${
+            isSelected ? "border-blue-700 bg-blue-700" : "border-slate-300"
+          }">
+            ${isSelected ? '<span class="w-2 h-2 rounded-full bg-white"></span>' : ''}
+          </div>
+        `;
+        optionsContainer.appendChild(card);
+      });
+
+      // Update palette & stats
+      updatePaletteUI();
+      updateStatsUI();
+    }
+
+    function selectOption(qId, key) {
+      examState.answers[qId] = key;
+      renderQuestion(examState.currentIndex);
+    }
+
+    function clearCurrentAnswer() {
+      const q = QUESTIONS[examState.currentIndex];
+      delete examState.answers[q.id];
+      renderQuestion(examState.currentIndex);
+    }
+
+    function toggleMarkForReview() {
+      const q = QUESTIONS[examState.currentIndex];
+      if (examState.markedReview[q.id]) {
+        delete examState.markedReview[q.id];
+      } else {
+        examState.markedReview[q.id] = true;
+      }
+      renderQuestion(examState.currentIndex);
+    }
+
+    function navigateQuestion(offset) {
+      const newIndex = examState.currentIndex + offset;
+      if (newIndex >= 0 && newIndex < QUESTIONS.length) {
+        renderQuestion(newIndex);
+      } else if (newIndex >= QUESTIONS.length) {
+        confirmSubmitTest();
+      }
+    }
+
+    // ----------------------------------------------------
+    // STEP 4: QUESTION PALETTE & PROGRESS
+    // ----------------------------------------------------
+    function renderPalette() {
+      const grid = document.getElementById("paletteGrid");
+      grid.innerHTML = "";
+
+      QUESTIONS.forEach((q, idx) => {
+        const btn = document.createElement("button");
+        btn.id = `palette-btn-${idx}`;
+        btn.onclick = () => renderQuestion(idx);
+        btn.className = "h-9 rounded-lg font-bold text-xs transition border flex items-center justify-center";
+        btn.textContent = (idx + 1);
+        grid.appendChild(btn);
+      });
+    }
+
+    function updatePaletteUI() {
+      QUESTIONS.forEach((q, idx) => {
+        const btn = document.getElementById(`palette-btn-${idx}`);
+        if (!btn) return;
+
+        const isCurrent = (idx === examState.currentIndex);
+        const isAnswered = !!examState.answers[q.id];
+        const isMarked = !!examState.markedReview[q.id];
+
+        // Reset classes
+        btn.className = "h-9 rounded-lg font-bold text-xs transition border flex items-center justify-center relative ";
+
+        if (isCurrent) {
+          btn.className += "border-2 border-sky-400 bg-blue-900 text-white shadow-xs ";
+        } else if (isAnswered) {
+          btn.className += "bg-emerald-600 text-white border-emerald-700 ";
+        } else if (isMarked) {
+          btn.className += "bg-amber-100 text-amber-900 border-amber-300 ";
+        } else {
+          btn.className += "bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200 ";
+        }
+
+        // Small badge dot for marked for review if answered
+        if (isMarked && isAnswered) {
+          btn.innerHTML = `${idx + 1}<span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-amber-400"></span>`;
+        } else {
+          btn.textContent = (idx + 1);
+        }
+      });
+    }
+
+    function updateStatsUI() {
+      const answeredCount = Object.keys(examState.answers).length;
+      const unansweredCount = QUESTIONS.length - answeredCount;
+      const reviewCount = Object.keys(examState.markedReview).length;
+
+      document.getElementById("statAnswered").textContent = answeredCount;
+      document.getElementById("statUnanswered").textContent = unansweredCount;
+      document.getElementById("statReview").textContent = reviewCount;
+
+      document.getElementById("progressAnsweredCount").textContent = answeredCount;
+      const percentage = Math.round((answeredCount / QUESTIONS.length) * 100);
+      document.getElementById("progressPercentage").textContent = `${percentage}%`;
+      document.getElementById("progressBarFill").style.width = `${percentage}%`;
+    }
+
+    // ----------------------------------------------------
+    // STEP 5: ANTI-CHEATING PROCTORING ENGINE
+    // ----------------------------------------------------
+    let blurTimeout = null;
+
+    function setupAntiCheatingListeners() {
+      // 1. Detect Tab Switch / Visibility Change
+      document.addEventListener("visibilitychange", () => {
+        if (!examState.isExamActive) return;
+        if (document.visibilityState === "hidden") {
+          registerViolation("Tab Switch / Inactive Window Detected");
+        }
+      });
+
+      // 2. Detect Window Blur (user clicked away or switched application)
+      window.addEventListener("blur", () => {
+        if (!examState.isExamActive) return;
+        blurTimeout = setTimeout(() => {
+          registerViolation("Application Focus Lost / Window Switched");
+        }, 500);
+      });
+
+      window.addEventListener("focus", () => {
+        if (blurTimeout) clearTimeout(blurTimeout);
+      });
+
+      // 3. Detect Fullscreen Exit
+      document.addEventListener("fullscreenchange", () => {
+        if (!examState.isExamActive) return;
+        if (!document.fullscreenElement) {
+          registerViolation("Exited Full-Screen Mode");
+        }
+      });
+    }
+
+    function registerViolation(reason) {
+      if (!examState.isExamActive) return;
+
+      examState.violations++;
+      const current = examState.violations;
+      document.getElementById("violationCountBadge").textContent = current;
+
+      if (current >= examState.maxViolations) {
+        // TERMINATE TEST
+        dismissViolationModal();
+        alert(`🚨 PROCTORING TERMINATION: You have exceeded the maximum limit of ${examState.maxViolations} violations (${reason}). Your examination is terminating now.`);
+        executeFinalSubmission("Terminated: Exceeded Proctoring Violations");
+      } else {
+        // Show Warning Modal
+        document.getElementById("modalViolationCurrent").textContent = current;
+        document.getElementById("violationModal").classList.remove("hidden");
+      }
+    }
+
+    function dismissViolationModal() {
+      document.getElementById("violationModal").classList.add("hidden");
+    }
+
+    // ----------------------------------------------------
+    // STEP 6: SUBMISSION WORKFLOW & DATABASE STORAGE
+    // ----------------------------------------------------
+    function confirmSubmitTest() {
+      const answeredCount = Object.keys(examState.answers).length;
+      const unansweredCount = QUESTIONS.length - answeredCount;
+
+      document.getElementById("modalAnsweredCount").textContent = answeredCount;
+      document.getElementById("modalUnansweredCount").textContent = unansweredCount;
+
+      const warningText = document.getElementById("modalWarningText");
+      if (unansweredCount > 0) {
+        warningText.classList.remove("hidden");
+      } else {
+        warningText.classList.add("hidden");
+      }
+
+      document.getElementById("submitConfirmModal").classList.remove("hidden");
+    }
+
+    function closeSubmitConfirmModal() {
+      document.getElementById("submitConfirmModal").classList.add("hidden");
+    }
+
+    function executeFinalSubmission(reason = "Manual Candidate Submission") {
+      closeSubmitConfirmModal();
+      clearInterval(examState.timerInterval);
+      examState.isExamActive = false;
+      examState.endTime = new Date();
+      examState.submissionReason = reason;
+
+      // Calculate Score
+      let score = 0;
+      QUESTIONS.forEach(q => {
+        if (examState.answers[q.id] === q.correct) {
+          score++;
+        }
+      });
+
+      // Calculate time taken
+      const totalSeconds = Math.max(1, 15 * 60 - examState.timeRemaining);
+      const mins = Math.floor(totalSeconds / 60);
+      const secs = totalSeconds % 60;
+      const timeTakenStr = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+      const percent = Math.round((score / QUESTIONS.length) * 100);
+
+      // Create Result Record Object
+      const record = {
+        id: "SWL-" + Date.now(),
+        timestamp: new Date().toLocaleString(),
+        fullName: candidate.fullName,
+        email: candidate.email,
+        college: candidate.college,
+        score: score,
+        percentage: percent,
+        timeTaken: timeTakenStr,
+        violations: examState.violations,
+        submissionReason: reason,
+        status: score >= 6 ? "PASSED" : "FAILED",
+        answers: { ...examState.answers }
+      };
+
+      // 1. SAVE LOCALLY (Browser Database)
+      saveResultRecord(record);
+
+      // 2. DISPATCH TO GOOGLE SHEETS (if Webhook configured)
+      syncToGoogleSheetsWebhook(record);
+
+      // Populate Result Screen
+      document.getElementById("finalScoreNumerator").textContent = score;
+      document.getElementById("finalScorePercent").textContent = `${percent}%`;
+
+      const verdictEl = document.getElementById("finalScoreVerdict");
+      if (score >= 8) {
+        verdictEl.textContent = "Outstanding Performance (Grade A+)";
+        verdictEl.className = "text-xs font-semibold text-emerald-300 mt-2";
+      } else if (score >= 6) {
+        verdictEl.textContent = "Passed – Good Job (Grade B)";
+        verdictEl.className = "text-xs font-semibold text-sky-300 mt-2";
+      } else {
+        verdictEl.textContent = "Assessment Needs Improvement (Retake Recommended)";
+        verdictEl.className = "text-xs font-semibold text-rose-300 mt-2";
+      }
+
+      document.getElementById("finalTimeTaken").textContent = timeTakenStr;
+      document.getElementById("finalViolationsCount").textContent = `${examState.violations} Violations`;
+      const violStatus = document.getElementById("finalViolationStatus");
+      if (examState.violations === 0) {
+        violStatus.textContent = "Clean Record (No violations recorded)";
+        violStatus.className = "text-[11px] text-emerald-700 font-semibold mt-0.5";
+      } else {
+        violStatus.textContent = `${examState.violations} violations logged during session`;
+        violStatus.className = "text-[11px] text-amber-700 font-semibold mt-0.5";
+      }
+
+      document.getElementById("resStudentName").textContent = candidate.fullName;
+      document.getElementById("resStudentEmail").textContent = candidate.email;
+      document.getElementById("resStudentCollege").textContent = candidate.college;
+      document.getElementById("resTimestamp").textContent = record.timestamp;
+      document.getElementById("resSubmitMode").textContent = reason;
+
+      // Render Detailed Answer Key
+      renderDetailedReview();
+
+      // Switch to Result View
+      document.getElementById("headerExamStatus").classList.add("hidden");
+      document.getElementById("btnOpenAdminModal").classList.remove("hidden");
+      switchView("viewResult");
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function renderDetailedReview() {
+      const container = document.getElementById("detailedReviewContainer");
+      container.innerHTML = "";
+
+      QUESTIONS.forEach((q, idx) => {
+        const studentAns = examState.answers[q.id];
+        const isCorrect = (studentAns === q.correct);
+        const card = document.createElement("div");
+
+        card.className = `p-5 rounded-xl border transition ${
+          isCorrect ? "border-emerald-200 bg-emerald-50/30" : "border-rose-200 bg-rose-50/30"
+        }`;
+
+        let optionsHtml = "";
+        q.options.forEach(opt => {
+          let optStyle = "border-slate-200 bg-white text-slate-700";
+          let badge = "";
+
+          if (opt.key === q.correct) {
+            optStyle = "border-emerald-500 bg-emerald-50 text-emerald-950 font-bold ring-1 ring-emerald-500";
+            badge = '<span class="text-[10px] uppercase font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded ml-auto">Correct Answer</span>';
+          } else if (opt.key === studentAns && !isCorrect) {
+            optStyle = "border-rose-400 bg-rose-50 text-rose-950 font-semibold";
+            badge = '<span class="text-[10px] uppercase font-bold text-rose-700 bg-rose-100 px-2 py-0.5 rounded ml-auto">Your Answer</span>';
+          }
+
+          optionsHtml += `
+            <div class="flex items-center gap-3 p-2.5 rounded-lg border text-xs ${optStyle}">
+              <span class="w-6 h-6 rounded flex items-center justify-center font-bold text-xs ${opt.key === q.correct ? 'bg-emerald-700 text-white' : 'bg-slate-100'}">${opt.key}</span>
+              <span>${opt.text}</span>
+              ${badge}
+            </div>
+          `;
+        });
+
+        card.innerHTML = `
+          <div class="flex items-start justify-between gap-3 mb-3">
+            <div class="flex items-center gap-2">
+              <span class="w-6 h-6 rounded-md bg-blue-900 text-white font-bold text-xs flex items-center justify-center">${idx + 1}</span>
+              <h4 class="text-sm font-bold text-slate-900">${q.question}</h4>
+            </div>
+            <span class="shrink-0 text-xs font-bold px-2.5 py-1 rounded-full ${
+              isCorrect ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-800"
+            }">
+              ${isCorrect ? "✓ Correct (+1)" : (studentAns ? "✗ Incorrect (0)" : "Unanswered (0)")}
+            </span>
+          </div>
+
+          <div class="space-y-2 mb-3">
+            ${optionsHtml}
+          </div>
+
+          <div class="p-3 bg-white/80 rounded-lg border border-slate-200 text-xs text-slate-600">
+            <strong class="text-slate-800">Concept Explanation:</strong> ${q.explanation}
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+    }
+
+    function retakeAssessment() {
+      if (confirm("Are you sure you want to retake this assessment? Your current scorecard will be reset.")) {
+        examState.answers = {};
+        examState.markedReview = {};
+        examState.violations = 0;
+        switchView("viewInstructions");
+      }
+    }
+
+    // ----------------------------------------------------
+    // STEP 7: ADMIN PORTAL & DATA MANAGEMENT
+    // ----------------------------------------------------
+    const STORAGE_KEY = "swl_assessment_results_v1";
+    const WEBHOOK_KEY = "swl_google_webhook_url";
+    const ADMIN_PASS = "admin123";
+
+    function saveResultRecord(record) {
+      try {
+        const existing = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+        existing.unshift(record); // newest first
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
+      } catch (err) {
+        console.error("Storage error", err);
+      }
+    }
+
+    function getResultRecords() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+      } catch (err) {
+        return [];
+      }
+    }
+
+    function openAdminModal() {
+      if (examState.isExamActive) {
+        alert("Cannot access admin portal while an active examination is in progress.");
+        return;
+      }
+      document.getElementById("adminLoginError").classList.add("hidden");
+      document.getElementById("adminPasswordInput").value = "";
+      document.getElementById("adminLoginModal").classList.remove("hidden");
+      setTimeout(() => document.getElementById("adminPasswordInput").focus(), 100);
+    }
+
+    function closeAdminModal() {
+      document.getElementById("adminLoginModal").classList.add("hidden");
+    }
+
+    function verifyAdminLogin() {
+      const entered = document.getElementById("adminPasswordInput").value.trim();
+      if (entered === ADMIN_PASS) {
+        closeAdminModal();
+        renderAdminDashboard();
+        switchView("viewAdminPortal");
+      } else {
+        document.getElementById("adminLoginError").classList.remove("hidden");
+      }
+    }
+
+    function renderAdminDashboard() {
+      const records = getResultRecords();
+      const tbody = document.getElementById("adminResultsTableBody");
+      const noRecordsMsg = document.getElementById("adminNoRecordsMsg");
+      tbody.innerHTML = "";
+
+      // Quick Stats Calculation
+      const total = records.length;
+      document.getElementById("adminStatTotal").textContent = total;
+
+      if (total === 0) {
+        noRecordsMsg.classList.remove("hidden");
+        document.getElementById("adminStatAvg").textContent = "0.0 / 10";
+        document.getElementById("adminStatPassRate").textContent = "0%";
+        document.getElementById("adminStatViolations").textContent = "0";
+        return;
+      }
+
+      noRecordsMsg.classList.add("hidden");
+
+      let totalScore = 0;
+      let passCount = 0;
+      let totalViolations = 0;
+
+      records.forEach((r, idx) => {
+        totalScore += (r.score || 0);
+        if (r.score >= 6) passCount++;
+        totalViolations += (r.violations || 0);
+
+        const tr = document.createElement("tr");
+        tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
+        tr.innerHTML = `
+          <td class="p-3 font-mono text-slate-400 font-bold">${idx + 1}</td>
+          <td class="p-3">
+            <p class="font-bold text-slate-900">${r.fullName}</p>
+            <p class="text-[11px] text-slate-400">${r.email}</p>
+          </td>
+          <td class="p-3 text-slate-600">${r.college}</td>
+          <td class="p-3">
+            <span class="font-bold text-sm ${r.score >= 6 ? 'text-blue-900' : 'text-rose-600'}">${r.score}</span>
+            <span class="text-slate-400 text-[10px]">/ 10 (${r.percentage}%)</span>
+          </td>
+          <td class="p-3 font-mono text-slate-600">${r.timeTaken}</td>
+          <td class="p-3">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${
+              r.violations === 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+            }">
+              ${r.violations} Violations
+            </span>
+          </td>
+          <td class="p-3">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${
+              r.status === 'PASSED' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+            }">
+              ${r.status}
+            </span>
+          </td>
+          <td class="p-3 text-slate-400 text-[11px]">${r.timestamp}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      const avgScore = (totalScore / total).toFixed(1);
+      const passRate = Math.round((passCount / total) * 100);
+
+      document.getElementById("adminStatAvg").textContent = `${avgScore} / 10`;
+      document.getElementById("adminStatPassRate").textContent = `${passRate}%`;
+      document.getElementById("adminStatViolations").textContent = totalViolations;
+    }
+
+    function filterAdminTable() {
+      const q = document.getElementById("adminSearchInput").value.toLowerCase();
+      const rows = document.querySelectorAll("#adminResultsTableBody tr");
+      rows.forEach(r => {
+        const text = r.innerText.toLowerCase();
+        r.style.display = text.includes(q) ? "" : "none";
+      });
+    }
+
+    function exportResultsCSV() {
+      const records = getResultRecords();
+      if (records.length === 0) {
+        alert("No candidate records available to export.");
+        return;
+      }
+
+      let csv = "ID,Candidate Name,Email Address,College Name,Score (/10),Percentage,Time Taken,Violations,Status,Submission Mode,Timestamp\n";
+      records.forEach(r => {
+        csv += `"${r.id}","${r.fullName}","${r.email}","${r.college}","${r.score}","${r.percentage}%","${r.timeTaken}","${r.violations}","${r.status}","${r.submissionReason}","${r.timestamp}"\n`;
+      });
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `SWL_AI_ML_Assessment_Results_${new Date().toISOString().slice(0,10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    function clearAllResults() {
+      if (confirm("Are you sure you want to permanently clear all stored candidate results from this browser?")) {
+        localStorage.removeItem(STORAGE_KEY);
+        renderAdminDashboard();
+      }
+    }
+
+    function exitAdminPortal() {
+      switchView("viewRegistration");
+    }
+
+    function returnToHomeIfAllowed() {
+      if (!examState.isExamActive) {
+        switchView("viewRegistration");
+      }
+    }
+
+    // ----------------------------------------------------
+    // GOOGLE SHEETS CLOUD SYNC WEBHOOK
+    // ----------------------------------------------------
+    function openWebhookSettingsModal() {
+      const existing = localStorage.getItem(WEBHOOK_KEY) || "";
+      document.getElementById("webhookUrlInput").value = existing;
+      document.getElementById("webhookSettingsModal").classList.remove("hidden");
+    }
+
+    function closeWebhookSettingsModal() {
+      document.getElementById("webhookSettingsModal").classList.add("hidden");
+    }
+
+    function saveWebhookSettings() {
+      const url = document.getElementById("webhookUrlInput").value.trim();
+      localStorage.setItem(WEBHOOK_KEY, url);
+      closeWebhookSettingsModal();
+      if (url) {
+        alert("✅ Google Sheets Webhook saved successfully! All future exam submissions will sync directly to your spreadsheet in real time.");
+      } else {
+        alert("Webhook cleared.");
+      }
+    }
+
+    function syncToGoogleSheetsWebhook(record) {
+      const webhookUrl = localStorage.getItem(WEBHOOK_KEY);
+      if (!webhookUrl) return;
+
+      try {
+        fetch(webhookUrl, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(record)
+        }).catch(e => console.warn("Google Sheet sync dispatch", e));
+      } catch (err) {
+        console.warn("Webhook error", err);
+      }
+    }
+
+    // ----------------------------------------------------
+    // ROUTER HELPER
+    // ----------------------------------------------------
+    function switchView(viewId) {
+      const views = ["viewRegistration", "viewInstructions", "viewExam", "viewResult", "viewAdminPortal"];
+      views.forEach(v => {
+        const el = document.getElementById(v);
+        if (v === viewId) {
+          el.classList.remove("hidden");
+        } else {
+          el.classList.add("hidden");
+        }
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  </script>
+</body>
+</html>
